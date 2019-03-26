@@ -36,8 +36,10 @@ class ModelBuilder:
     def caclulateProbabilities(self):
         deltav = len(self.tokens) * self.delta
         for token, word in self.words.items():
-            word.hamSmoothP = round((word.hamFreq + self.delta) / (self.hamWordsCount + deltav), 5)
-            word.spamSmoothP = round((word.spamFreq + self.delta) / (self.spamWordsCount + deltav), 5)
+            if token == "acceptable":
+                print("hello")
+            word.hamSmoothP = (float(word.hamFreq + self.delta)) / (float(self.hamWordsCount + deltav))
+            word.spamSmoothP = (float(word.spamFreq + self.delta)) / (float(self.spamWordsCount + deltav))
 
     def getWords(self):
         result = []
