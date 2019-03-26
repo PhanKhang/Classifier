@@ -17,9 +17,9 @@ class Uniparser:
         for line in f:
             breakdown = line.split("  ")
             word = Word(breakdown[1])
-            word.hamFreq = breakdown[2]
-            word.hamSmoothP = breakdown[3]
-            word.spamFreq = breakdown[4]
-            word.spamSmoothP = breakdown[5]
+            word.hamFreq = float(breakdown[2])
+            word.hamSmoothP = float(breakdown[3])
+            word.spamFreq = float(breakdown[4])
+            word.spamSmoothP = float(breakdown[5])
             model[word.word] = word
         return model
