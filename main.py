@@ -18,8 +18,8 @@ def parseFile(file):
 def train():
     trainPath = (input("Folder with training set (train by default):") or 'train')
     delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
-    stop = (input("Use stop words? (0 - False by default):") or 0)
-    if stop:
+    stop = (input("Use stop words? (1- for yes, 0 - no (default)):") or 0)
+    if stop == 1:
         stopFile = (input("Stop file name? (English-Stop-Words.txt by default)") or 'English-Stop-Words.txt')
     vocabFile = (input("Vocabulary file name (vocab.txt by default):") or 'vocab.txt')
     modelBuilder.delta = delta
@@ -66,10 +66,10 @@ def classify():
     testSpamSet = [f for f in listdir(testPath) if isfile(join(testPath, f)) and "spam" in f]
     testHamSet = [f for f in listdir(testPath) if isfile(join(testPath, f)) and "ham" in f]
     for hamTestFile in testHamSet:
-        hamTestTokenSet = Uniparser.parseTrain(testPath+'/'+hamTestFile)
+        hamTestTokenSet = Uniparser.parseTrain(testPath+'/'+hamTestFile, 0, '')
         classifier.classify(hamTestFile, hamTestTokenSet, model, pHam)
     for spamTestFile in testSpamSet:
-        spamTestTokenSet = Uniparser.parseTrain(testPath+'/'+spamTestFile)
+        spamTestTokenSet = Uniparser.parseTrain(testPath+'/'+spamTestFile, 0, '')
         classifier.classify(spamTestFile, spamTestTokenSet, model, pSpam)
 
     va = classifier.testResults
