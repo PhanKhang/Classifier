@@ -5,10 +5,21 @@ from word import Word
 class Uniparser:
 
     @classmethod
-    def parseTrain(cls, file):
-        f = open(file, encoding = "ISO-8859-1")
-        rawbody = f.read()
-        return re.split('[^a-zA-Z]', rawbody)
+    def parseTrain(cls, file, stop, stopFile):
+        if not stop==1:
+            f = open(file, encoding = "ISO-8859-1")
+            rawbody = f.read()
+            return re.split('[^a-zA-Z]', rawbody)
+        else:
+            s = open(stopFile, encoding="ISO-8859-1")
+            f = open(file, encoding="ISO-8859-1")
+            rawbody = f.read()
+            tokenSet = re.split('[^a-zA-Z]', rawbody)
+            for stopWord in s:
+                if stopWord in tokenSet:
+                   tokenSet = tokenSet.remove(stopWord)
+            return tokenSet
+
 
     @classmethod
     def parseModel(cls, file):

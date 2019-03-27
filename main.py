@@ -1,4 +1,5 @@
 from os import listdir
+import sys
 from os.path import isfile, join
 from modelbuilder import ModelBuilder
 from classifier import Classifier
@@ -17,16 +18,32 @@ def parseFile(file):
 def train():
     trainPath = (input("Folder with training set (train by default):") or 'train')
     delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
+    stop = (input("Use stop words? (0 - False by default):") or 0)
+    if stop:
+        stopFile = (input("Stop file name? (English-Stop-Words.txt by default)") or 'English-Stop-Words.txt')
     vocabFile = (input("Vocabulary file name (vocab.txt by default):") or 'vocab.txt')
     modelBuilder.delta = delta
     spamSet = [f for f in listdir(trainPath) if isfile(join(trainPath, f)) and "spam" in f]
     hamSet = [f for f in listdir(trainPath) if isfile(join(trainPath, f)) and "ham" in f]
+    progress = 0
+    count = 0
+    total = len(hamSet)+len(spamSet)
     for hamFile in hamSet:
-        hamTokenSet = Uniparser.parseTrain(trainPath+'/'+hamFile)
+        count+=1
+        progress = count*100/total
+        hamTokenSet = Uniparser.parseTrain(trainPath+'/'+hamFile,stop,stopFile)
         modelBuilder.createWords(hamTokenSet, 'ham')
+        sys.stdout.flush()
+        sys.stdout.write("progress: %d%%   \r" % (progress))
+
     for spamFile in spamSet:
-        spamTokenSet = Uniparser.parseTrain(trainPath+'/'+spamFile)
+        count += 1
+        progress = count*100/total
+        spamTokenSet = Uniparser.parseTrain(trainPath+'/'+spamFile,stop,stopFile)
         modelBuilder.createWords(spamTokenSet, 'spam')
+        sys.stdout.flush()
+        sys.stdout.write("progress: %d%%   \r" % (progress))
+
 
     modelBuilder.caclulateProbabilities()
     va = modelBuilder.getWords()
