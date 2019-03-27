@@ -9,5 +9,10 @@ class Testresult:
         self.result = ''
 
     def toString(self):
-        return str(self.counter) + "  " + self.name + "  " + self.derivedclass + "  " + str(self.hamscore) + "  " + str(
-            self.spamscore) + "  " + self.actualclass + "  " + self.result
+        if self.derivedclass == self.actualclass:
+            return str(self.counter) + "\t" + self.name + "\t" + self.derivedclass + "\t" + str(self.hamscore) + "\t" + str(
+                self.spamscore) + "\t" + self.actualclass + "\t" + self.result + "\tright" + "\n"
+        else:
+            return str(self.counter) + "\t" + self.name + "\t" + self.derivedclass + "\t" + str(
+                self.hamscore) + "\t" + str(
+                self.spamscore) + "\t" + self.actualclass + "\t" + self.result + "\twrong" + "\n"

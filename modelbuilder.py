@@ -1,5 +1,5 @@
 from word import Word
-
+from decimal import *
 
 
 class ModelBuilder:
@@ -36,10 +36,8 @@ class ModelBuilder:
     def caclulateProbabilities(self):
         deltav = len(self.tokens) * self.delta
         for token, word in self.words.items():
-            if token == "acceptable":
-                print("hello")
-            word.hamSmoothP = (float(word.hamFreq + self.delta)) / (float(self.hamWordsCount + deltav))
-            word.spamSmoothP = (float(word.spamFreq + self.delta)) / (float(self.spamWordsCount + deltav))
+            word.hamSmoothP = float(word.hamFreq + self.delta) / float(self.hamWordsCount + deltav)
+            word.spamSmoothP = float(word.spamFreq + self.delta) / float(self.spamWordsCount + deltav)
 
     def getWords(self):
         result = []

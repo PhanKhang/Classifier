@@ -10,7 +10,7 @@ classifier = Classifier()
 
 
 def parseFile(file):
-    f = open(file, "r")
+    f = open(file, encoding = "ISO-8859-1")
     rawbody = f.read()
     return re.split('[^a-zA-Z]', rawbody)
 

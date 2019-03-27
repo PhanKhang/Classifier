@@ -14,18 +14,15 @@ class Classifier:
         testresult.hamscore = log10(p)
         testresult.spamscore = log10(p)
         for token in tokenSet:
-            if ltoken in model:
-                word = model[ltoken]
+            if token in model:
+                word = model[token]
                 ltoken = token.lower()
                 testresult.hamscore += log10(word.hamSmoothP)
                 testresult.spamscore += log10(word.spamSmoothP)
         testresult.derivedclass = 'ham'
         if testresult.spamscore > testresult.hamscore:
             testresult.derivedclass = 'spam'
-        self.testResults.append(testresult)
-
-
-
+        self.testResults.append(testresult.toString())
 
 
 
