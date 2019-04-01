@@ -20,7 +20,7 @@ def train():
     trainPath = (input("Folder with training set (train by default):") or 'train')
     delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     mode = int(input(
-        "Select Mode:\n1-Use stop words\n2-Use word length filtering\n3-Use infrequent word filtering\n0-no mode\n(0 - no mode (default)):") or 0)
+        "Select Mode:\n1-Use stop words\n2-Use word length filtering\n3-Use infrequent word filtering\n4-Use different deltas\n0-no mode\n(0 - no mode (default)):") or 0)
     vocabAv = 'no'
     if mode == 1:
         stopFile = (input("Stop file name? (English-Stop-Words.txt by default)") or 'English-Stop-Words.txt')
@@ -35,9 +35,13 @@ def train():
         vocabFile = (input("Vocabulary file name (fmodel.txt by default):") or 'fmodel.txt')
         vocabAv = (input(
             "Please provide vocabulary file (vocab.txt by default):") or 'vocab.txt')
+    elif mode == 4:
+        vocabFile = (input("Vocabulary file name (delta.txt by default):") or 'delta.txt')
+        vocabAv = (input(
+            "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
     else:
-        vocabFile = (input("Vocabulary file name (vocab.txt by default):") or 'vocab.txt')
-    modelBuilder.delta = delta
+        vocabFile = (input("Vocabulary file name (baseline.txt by default):") or 'baseline.txt')
+    modelBuilder.delta = float(delta)
 
     if vocabAv == 'no':
         spamSet = [f for f in listdir(trainPath) if isfile(join(trainPath, f)) and "spam" in f]
@@ -45,6 +49,8 @@ def train():
         progress = 0
         count = 0
         total = len(hamSet) + len(spamSet)
+        mode = 0
+        stopFile = ''
         for hamFile in hamSet:
             count += 1
             progress = count * 100 / total
@@ -52,6 +58,7 @@ def train():
             modelBuilder.createWords(hamTokenSet, 'ham')
             sys.stdout.flush()
             sys.stdout.write("progress: %d%%   \r" % (progress))
+            print("progress: %d%%   \r" % (progress))
 
         for spamFile in spamSet:
             count += 1
@@ -60,12 +67,60 @@ def train():
             modelBuilder.createWords(spamTokenSet, 'spam')
             sys.stdout.flush()
             sys.stdout.write("progress: %d%%   \r" % (progress))
+            print("progress: %d%%   \r" % (progress))
 
         modelBuilder.caclulateProbabilities()
+
+        print('spam ' + str(modelBuilder.spamWordsCount))
+        print('ham ' + str(modelBuilder.hamWordsCount))
+        print(len(modelBuilder.tokens))
+
         va = modelBuilder.getWords()
         vf = open(vocabFile, 'a')
         for line in va:
             vf.write(line)
+
+        model = Uniparser.parseModel(vocabFile)
+
+        hamWordCount = 0
+        spamWordCount = 0
+
+        for token, word in model.items():
+            hamWordCount += word.hamFreq
+            spamWordCount += word.spamFreq
+
+    elif mode == 4:
+        model = Uniparser.parseModel(vocabAv)
+        words = Uniparser.parseModelArr(vocabAv)
+
+        vocabFilePre = vocabFile.split('.')[0]
+
+        hamWordCount = 0
+        spamWordCount = 0
+
+        for word in words:
+            hamWordCount += word.hamFreq
+            spamWordCount += word.spamFreq
+
+
+        modelBuilder.hamWordsCount = hamWordCount
+        modelBuilder.spamWordsCount = spamWordCount
+        modelBuilder.words = model
+        modelBuilder.tokens = words
+
+        print("stats:")
+        print("spam count: " + str(modelBuilder.spamWordsCount))
+        print("ham count: " + str(modelBuilder.hamWordsCount))
+        print("tokens " + str(len(modelBuilder.tokens)))
+
+        for i in range(1,11):
+            modelBuilder.delta = float(0.1 * i)
+            modelBuilder.caclulateProbabilities()
+            va = modelBuilder.getWords()
+            vf = open(vocabFilePre+str(i)+'.txt', 'a')
+            for line in va:
+                vf.write(line)
+
     elif mode == 1:
         model = Uniparser.parseModel(vocabAv)
         s = open(stopFile, encoding="ISO-8859-1")
@@ -84,6 +139,11 @@ def train():
         for token, word in model.items():
             hamWordCount += word.hamFreq
             spamWordCount += word.spamFreq
+
+        tokenSet = []
+        for token, word in model.items():
+            tokenSet.append(word)
+        modelBuilder.tokens = tokenSet
 
         modelBuilder.hamWordsCount = hamWordCount
         modelBuilder.spamWordsCount = spamWordCount
@@ -111,6 +171,11 @@ def train():
             hamWordCount += word.hamFreq
             spamWordCount += word.spamFreq
 
+        tokenSet = []
+        for token, word in model.items():
+            tokenSet.append(word)
+        modelBuilder.tokens = tokenSet
+
         modelBuilder.hamWordsCount = hamWordCount
         modelBuilder.spamWordsCount = spamWordCount
         modelBuilder.words = model
@@ -122,17 +187,16 @@ def train():
             vf.write(line)
     elif mode == 3:
         model = Uniparser.parseModel(vocabAv)
+        wordSet = Uniparser.parseModelArr(vocabAv)
+
         hamWordCount = 0
         spamWordCount = 0
 
         vocabFilePre = vocabFile.split('.')[0]
 
-        sortedModelHam = sorted(model.items(), key=lambda x: x[1].hamFreq, reverse=True)
-        sortedModelSpam = sorted(model.items(), key=lambda x: x[1].spamFreq, reverse=True)
-
-        for token, word in sortedModelHam:
+        for word in wordSet:
             if word.hamFreq == 1 or word.spamFreq == 1:
-                model.pop(token, None)
+                model.pop(word.word, None)
 
         for token, word in model.items():
             hamWordCount += word.hamFreq
@@ -141,6 +205,11 @@ def train():
         modelBuilder.hamWordsCount = hamWordCount
         modelBuilder.spamWordsCount = spamWordCount
         modelBuilder.words = model
+
+        tokenSet = []
+        for token, word in model.items():
+            tokenSet.append(word)
+        modelBuilder.tokens = tokenSet
 
         modelBuilder.caclulateProbabilities()
         va = modelBuilder.getWords()
@@ -152,9 +221,9 @@ def train():
         for i in range(1,5):
             hamWordCount = 0
             spamWordCount = 0
-            for token, word in sortedModelHam:
+            for word in wordSet:
                 if word.hamFreq <= 5*i or word.spamFreq <= 5*i:
-                    model.pop(token, None)
+                    model.pop(word.word, None)
 
             for token, word in model.items():
                 hamWordCount += word.hamFreq
@@ -163,6 +232,11 @@ def train():
             modelBuilder.hamWordsCount = hamWordCount
             modelBuilder.spamWordsCount = spamWordCount
             modelBuilder.words = model
+
+            tokenSet = []
+            for token, word in model.items():
+                tokenSet.append(word)
+            modelBuilder.tokens = tokenSet
 
             modelBuilder.caclulateProbabilities()
             va = modelBuilder.getWords()
@@ -170,29 +244,28 @@ def train():
             for line in va:
                 vf.write(line)
         #######################################################
-        for i in range(1,6):
-            model = model = Uniparser.parseModel(vocabAv)
-            sortedModelHam = sorted(model.items(), key=lambda x: x[1].hamFreq, reverse=True)
-            sortedModelSpam = sorted(model.items(), key=lambda x: x[1].spamFreq, reverse=True)
-            size = len(sortedModelSpam)
+        wordSet = []
+        for token, word in model.items():
+            wordSet.append(word)
 
-            cutOff = size * 0.05 * i
+        for i in range(1,6):
+            sortedModelHam = sorted(wordSet, key=lambda x: x.hamFreq, reverse=True)
+            sortedModelSpam = sorted(wordSet, key=lambda x: x.spamFreq, reverse=True)
+
+            size = len(sortedModelSpam)
+            cutOff = int(size * 0.05 * i)
 
             hamWordCount = 0
             spamWordCount = 0
 
-            count = 0
-            for token, word in sortedModelHam:
-                model.pop(token, None)
-                count += 1
-                if count >= cutOff:
-                    break
-            count = 0
-            for token, word in sortedModelSpam:
-                model.pop(token, None)
-                count += 1
-                if count >= cutOff:
-                    break
+            for j in range(cutOff):
+                model.pop(sortedModelHam[j].word, None)
+
+            size = len(sortedModelSpam)
+            cutOff = int(size * 0.05 * i)
+
+            for j in range(cutOff):
+                model.pop(sortedModelSpam[j].word, None)
 
             for token, word in model.items():
                 hamWordCount += word.hamFreq
@@ -201,6 +274,12 @@ def train():
             modelBuilder.hamWordsCount = hamWordCount
             modelBuilder.spamWordsCount = spamWordCount
             modelBuilder.words = model
+
+            tokenSet = []
+            for token, word in model.items():
+                tokenSet.append(word)
+            modelBuilder.tokens = tokenSet
+
 
             modelBuilder.caclulateProbabilities()
             va = modelBuilder.getWords()
