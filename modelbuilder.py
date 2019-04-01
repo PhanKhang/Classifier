@@ -14,8 +14,8 @@ class ModelBuilder:
         for token in tokenSet:
             ltoken = token.lower()
             if mailtype == 'ham':
+                self.hamWordsCount += 1
                 if ltoken in self.tokens and ltoken != '':
-                    self.hamWordsCount += 1
                     self.words[ltoken].hamFreq += 1
                 elif ltoken != '':
                     self.tokens.append(ltoken)
@@ -23,8 +23,8 @@ class ModelBuilder:
                     word.hamFreq = 1
                     self.words[ltoken] = word
             elif mailtype == 'spam':
+                self.spamWordsCount += 1
                 if ltoken in self.tokens and ltoken != '':
-                    self.spamWordsCount += 1
                     self.words[ltoken].spamFreq += 1
                 elif ltoken != '':
                     self.tokens.append(ltoken)
