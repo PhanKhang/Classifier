@@ -4,6 +4,7 @@ from os.path import isfile, join
 from modelbuilder import ModelBuilder
 from classifier import Classifier
 from uniparser import Uniparser
+from retrainer import Retrainer
 import re
 
 modelBuilder = ModelBuilder()
@@ -20,25 +21,36 @@ def train():
     trainPath = (input("Folder with training set (train by default):") or 'train')
     delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     mode = int(input(
-        "Select Mode:\n1-Use stop words\n2-Use word length filtering\n3-Use infrequent word filtering\n4-Use different deltas\n0-no mode\n(0 - no mode (default)):") or 0)
+        "Select Mode:"
+        "\n1-Use stop words"
+        "\n2-Use word length filtering"
+        "\n3-Use infrequent word filtering"
+        "\n4-Use retrain model with different delta"
+        "\n0-no mode, regenerate model"
+        "\n0 - no mode (default):") or 0)
     vocabAv = 'no'
+    inputParameter = ''
     if mode == 1:
-        stopFile = (input("Stop file name? (English-Stop-Words.txt by default)") or 'English-Stop-Words.txt')
-        vocabFile = (input("Vocabulary file name (stopword-model.txt by default):") or 'stopword-model.txt')
-        vocabAv = (input(
-            "Is Vocabulary file available if yes provide name? no if not (vocab.txt by default):") or 'vocab.txt')
-    elif mode == 2:
-        vocabFile = (input("Vocabulary file name (wordlength-model.txt by default):") or 'wordlength-model.txt')
-        vocabAv = (input(
-            "Is Vocabulary file available if yes provide name? no if not (vocab.txt by default):") or 'vocab.txt')
-    elif mode == 3:
-        vocabFile = (input("Vocabulary file name (fmodel.txt by default):") or 'fmodel.txt')
-        vocabAv = (input(
-            "Please provide vocabulary file (vocab.txt by default):") or 'vocab.txt')
-    elif mode == 4:
-        vocabFile = (input("Vocabulary file name (delta.txt by default):") or 'delta.txt')
+        inputParameter = (input("Stop file name? (English-Stop-Words.txt by default)") or 'English-Stop-Words.txt')
+        vocabFile = (input("New Vocabulary file name (stopword-model.txt by default):") or 'stopword-model.txt')
         vocabAv = (input(
             "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
+    elif mode == 2:
+        vocabFile = (input("New Vocabulary file name (wordlength-model.txt by default):") or 'wordlength-model.txt')
+        vocabAv = (input(
+            "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
+    elif mode == 3:
+        vocabFile = (input("New Vocabulary file name (frequency-model.txt by default):") or 'frequency-model.txt')
+        vocabAv = (input(
+            "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
+        inputParameter = (input(
+            "Please indicate action and filtering frequency (i.e == 1 or <= 1 ) or if it is top percentage "
+            "filtering then input percentage wihtout % sign (i.e top 5 -- as top 5 %) (default <= 1):") or '<= 1')
+    elif mode == 4:
+        vocabFile = (input("Vocabulary file name (delta-model.txt by default):") or 'delta-model.txt')
+        vocabAv = (input(
+            "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
+        delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     else:
         vocabFile = (input("Vocabulary file name (baseline.txt by default):") or 'baseline.txt')
     modelBuilder.delta = float(delta)
@@ -70,232 +82,21 @@ def train():
             print("progress: %d%%   \r" % (progress))
 
         modelBuilder.caclulateProbabilities()
-
-        print('spam ' + str(modelBuilder.spamWordsCount))
-        print('ham ' + str(modelBuilder.hamWordsCount))
-        print(len(modelBuilder.tokens))
-
         va = modelBuilder.getWords()
         vf = open(vocabFile, 'a')
         for line in va:
             vf.write(line)
 
-        model = Uniparser.parseModel(vocabFile)
-
-        hamWordCount = 0
-        spamWordCount = 0
-
-        for token, word in model.items():
-            hamWordCount += word.hamFreq
-            spamWordCount += word.spamFreq
-
-    elif mode == 4:
-        model = Uniparser.parseModel(vocabAv)
-        words = Uniparser.parseModelArr(vocabAv)
-
-        vocabFilePre = vocabFile.split('.')[0]
-
-        hamWordCount = 0
-        spamWordCount = 0
-
-        for word in words:
-            hamWordCount += word.hamFreq
-            spamWordCount += word.spamFreq
-
-
-        modelBuilder.hamWordsCount = hamWordCount
-        modelBuilder.spamWordsCount = spamWordCount
-        modelBuilder.words = model
-        modelBuilder.tokens = words
-
-        print("stats:")
-        print("spam count: " + str(modelBuilder.spamWordsCount))
-        print("ham count: " + str(modelBuilder.hamWordsCount))
-        print("tokens " + str(len(modelBuilder.tokens)))
-
-        for i in range(1,11):
-            modelBuilder.delta = float(0.1 * i)
-            modelBuilder.caclulateProbabilities()
-            va = modelBuilder.getWords()
-            vf = open(vocabFilePre+str(i)+'.txt', 'a')
-            for line in va:
-                vf.write(line)
-
-    elif mode == 1:
-        model = Uniparser.parseModel(vocabAv)
-        s = open(stopFile, encoding="ISO-8859-1")
-        tokenSet = []
-
-        hamWordCount = 0
-        spamWordCount = 0
-
-        for token, word in model.items():
-            tokenSet.append(token)
-        for w in s:
-            for token in tokenSet:
-                if w.strip() == token:
-                    model.pop(token, None)
-
-        for token, word in model.items():
-            hamWordCount += word.hamFreq
-            spamWordCount += word.spamFreq
-
-        tokenSet = []
-        for token, word in model.items():
-            tokenSet.append(word)
-        modelBuilder.tokens = tokenSet
-
-        modelBuilder.hamWordsCount = hamWordCount
-        modelBuilder.spamWordsCount = spamWordCount
-        modelBuilder.words = model
-
-        modelBuilder.caclulateProbabilities()
-        va = modelBuilder.getWords()
-        vf = open(vocabFile, 'a')
-        for line in va:
-            vf.write(line)
-    elif mode == 2:
-        model = Uniparser.parseModel(vocabAv)
-        tokenSet = []
-
-        hamWordCount = 0
-        spamWordCount = 0
-
-        for token, word in model.items():
-            tokenSet.append(token)
-        for token in tokenSet:
-            if len(token) <= 2 or len(token) >= 9:
-                model.pop(token, None)
-
-        for token, word in model.items():
-            hamWordCount += word.hamFreq
-            spamWordCount += word.spamFreq
-
-        tokenSet = []
-        for token, word in model.items():
-            tokenSet.append(word)
-        modelBuilder.tokens = tokenSet
-
-        modelBuilder.hamWordsCount = hamWordCount
-        modelBuilder.spamWordsCount = spamWordCount
-        modelBuilder.words = model
-
-        modelBuilder.caclulateProbabilities()
-        va = modelBuilder.getWords()
-        vf = open(vocabFile, 'a')
-        for line in va:
-            vf.write(line)
-    elif mode == 3:
-        model = Uniparser.parseModel(vocabAv)
-        wordSet = Uniparser.parseModelArr(vocabAv)
-
-        hamWordCount = 0
-        spamWordCount = 0
-
-        vocabFilePre = vocabFile.split('.')[0]
-
-        for word in wordSet:
-            if word.hamFreq == 1 or word.spamFreq == 1:
-                model.pop(word.word, None)
-
-        for token, word in model.items():
-            hamWordCount += word.hamFreq
-            spamWordCount += word.spamFreq
-
-        modelBuilder.hamWordsCount = hamWordCount
-        modelBuilder.spamWordsCount = spamWordCount
-        modelBuilder.words = model
-
-        tokenSet = []
-        for token, word in model.items():
-            tokenSet.append(word)
-        modelBuilder.tokens = tokenSet
-
-        modelBuilder.caclulateProbabilities()
-        va = modelBuilder.getWords()
-        vf = open(vocabFilePre+'1'+'.txt', 'a')
-        for line in va:
-            vf.write(line)
-
-        #######################################################
-        for i in range(1,5):
-            hamWordCount = 0
-            spamWordCount = 0
-            for word in wordSet:
-                if word.hamFreq <= 5*i or word.spamFreq <= 5*i:
-                    model.pop(word.word, None)
-
-            for token, word in model.items():
-                hamWordCount += word.hamFreq
-                spamWordCount += word.spamFreq
-
-            modelBuilder.hamWordsCount = hamWordCount
-            modelBuilder.spamWordsCount = spamWordCount
-            modelBuilder.words = model
-
-            tokenSet = []
-            for token, word in model.items():
-                tokenSet.append(word)
-            modelBuilder.tokens = tokenSet
-
-            modelBuilder.caclulateProbabilities()
-            va = modelBuilder.getWords()
-            vf = open(vocabFilePre+str(i*5)+'.txt', 'a')
-            for line in va:
-                vf.write(line)
-        #######################################################
-        wordSet = []
-        for token, word in model.items():
-            wordSet.append(word)
-
-        for i in range(1,6):
-            sortedModelHam = sorted(wordSet, key=lambda x: x.hamFreq, reverse=True)
-            sortedModelSpam = sorted(wordSet, key=lambda x: x.spamFreq, reverse=True)
-
-            size = len(sortedModelSpam)
-            cutOff = int(size * 0.05 * i)
-
-            hamWordCount = 0
-            spamWordCount = 0
-
-            for j in range(cutOff):
-                model.pop(sortedModelHam[j].word, None)
-
-            size = len(sortedModelSpam)
-            cutOff = int(size * 0.05 * i)
-
-            for j in range(cutOff):
-                model.pop(sortedModelSpam[j].word, None)
-
-            for token, word in model.items():
-                hamWordCount += word.hamFreq
-                spamWordCount += word.spamFreq
-
-            modelBuilder.hamWordsCount = hamWordCount
-            modelBuilder.spamWordsCount = spamWordCount
-            modelBuilder.words = model
-
-            tokenSet = []
-            for token, word in model.items():
-                tokenSet.append(word)
-            modelBuilder.tokens = tokenSet
-
-
-            modelBuilder.caclulateProbabilities()
-            va = modelBuilder.getWords()
-            vf = open(vocabFilePre+str(i*5)+'p.txt', 'a')
-            for line in va:
-                vf.write(line)
-
-
-
+    else:
+        Retrainer().retrainSet(vocabAv, vocabFile, mode, inputParameter, delta)
 
 
 def classify():
-    vocabFile = (input("Vocabulary file name (vocab.txt by default):") or 'vocab.txt')
+    vocabFile = (input("Vocabulary file name (baseline.txt by default):") or 'baseline.txt')
     trainPath = (input("Folder with training set (train by default):") or 'train')
     testPath = (input("Folder with test set (test by default):") or 'test')
-    resultFile = (input("Result file name (result.txt by default):") or 'result.txt')
+    resultFile = (input("Result file name (result-" + vocabFile.split('.')[0] + ".txt by default):")
+                  or 'result-' + vocabFile.split('.')[0] + '.txt')
     spamSet = [f for f in listdir(trainPath) if isfile(join(trainPath, f)) and "spam" in f]
     hamSet = [f for f in listdir(trainPath) if isfile(join(trainPath, f)) and "ham" in f]
     pHam = float(len(hamSet) / (len(hamSet) + len(spamSet)))
@@ -312,12 +113,11 @@ def classify():
         spamTestTokenSet = Uniparser.parseTrain(testPath + '/' + spamTestFile, 0, '')
         classifier.classify(spamTestFile, spamTestTokenSet, model, pSpam)
 
-    print("Precision Ham = " + str(classifier.precision('ham')))
-    print("Recall Ham = " + str(classifier.recall('ham')))
-    p = classifier.precision('ham')
-    r = classifier.recall('ham')
-    b = 1
-    print("F1 Ham = " + str((b * b + 1) * p * r / (b * b * p + r)))
+    va = classifier.testResults
+    vf = open(resultFile, 'a')
+    for line in va:
+        vf.write(line)
+
     print("__________________________________________")
     print("Precision Spam = " + str(classifier.precision('Spam')))
     print("Recall Spam = " + str(classifier.recall('Spam')))
@@ -325,15 +125,17 @@ def classify():
     r = classifier.recall('Spam')
     b = 1
     print("F1 Spam = " + str((b * b + 1) * p * r / (b * b * p + r)))
-
+    print("__________________________________________")
+    print("Precision Ham = " + str(classifier.precision('ham')))
+    print("Recall Ham = " + str(classifier.recall('ham')))
+    p = classifier.precision('ham')
+    r = classifier.recall('ham')
+    b = 1
+    print("F1 Ham = " + str((b * b + 1) * p * r / (b * b * p + r)))
+    print("__________________________________________")
     print("Accuracy = " + str(classifier.accuracy()))
     print("Confusion matrix: ")
     print(classifier.conFusionMatrix)
-
-    va = classifier.testResults
-    vf = open(resultFile, 'a')
-    for line in va:
-        vf.write(line)
 
 
 def main():
