@@ -19,7 +19,6 @@ def parseFile(file):
 
 def train():
     trainPath = (input("Folder with training set (train by default):") or 'train')
-    delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     mode = int(input(
         "Select Mode:"
         "\n1-Use stop words"
@@ -31,23 +30,26 @@ def train():
     vocabAv = 'no'
     inputParameter = ''
     if mode == 1:
-        inputParameter = (input("Stop file name? (English-Stop-Words.txt by default)") or 'English-Stop-Words.txt')
         vocabFile = (input("New Vocabulary file name (stopword-model.txt by default):") or 'stopword-model.txt')
         vocabAv = (input(
             "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
+        inputParameter = (input("Stop file name? (English-Stop-Words.txt by default)") or 'English-Stop-Words.txt')
+        delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     elif mode == 2:
         vocabFile = (input("New Vocabulary file name (wordlength-model.txt by default):") or 'wordlength-model.txt')
         vocabAv = (input(
             "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
+        delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     elif mode == 3:
         vocabFile = (input("New Vocabulary file name (frequency-model.txt by default):") or 'frequency-model.txt')
         vocabAv = (input(
             "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
         inputParameter = (input(
-            "Please indicate action and filtering frequency (i.e == 1 or <= 1 ) or if it is top percentage "
+            "Please indicate action and filtering frequency (i.e = 1 or <= 1 ) or if it is top percentage "
             "filtering then input percentage wihtout % sign (i.e top 5 -- as top 5 %) (default <= 1):") or '<= 1')
+        delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     elif mode == 4:
-        vocabFile = (input("Vocabulary file name (delta-model.txt by default):") or 'delta-model.txt')
+        vocabFile = (input("New Vocabulary file name (delta-model.txt by default):") or 'delta-model.txt')
         vocabAv = (input(
             "Please provide vocabulary file (baseline.txt by default):") or 'baseline.txt')
         delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
@@ -70,7 +72,6 @@ def train():
             modelBuilder.createWords(hamTokenSet, 'ham')
             sys.stdout.flush()
             sys.stdout.write("progress: %d%%   \r" % (progress))
-            print("progress: %d%%   \r" % (progress))
 
         for spamFile in spamSet:
             count += 1
@@ -79,7 +80,6 @@ def train():
             modelBuilder.createWords(spamTokenSet, 'spam')
             sys.stdout.flush()
             sys.stdout.write("progress: %d%%   \r" % (progress))
-            print("progress: %d%%   \r" % (progress))
 
         modelBuilder.caclulateProbabilities()
         va = modelBuilder.getWords()
@@ -119,19 +119,19 @@ def classify():
         vf.write(line)
 
     print("__________________________________________")
-    print("Precision Spam = " + str(classifier.precision('Spam')))
-    print("Recall Spam = " + str(classifier.recall('Spam')))
+    print("Precision Spam = " + str(round(classifier.precision('Spam'), 6)))
+    print("Recall Spam = " + str(round(classifier.recall('Spam'), 6)))
     p = classifier.precision('Spam')
     r = classifier.recall('Spam')
     b = 1
-    print("F1 Spam = " + str((b * b + 1) * p * r / (b * b * p + r)))
+    print("F1 Spam = " + str(round((b * b + 1) * p * r / (b * b * p + r), 6)))
     print("__________________________________________")
-    print("Precision Ham = " + str(classifier.precision('ham')))
-    print("Recall Ham = " + str(classifier.recall('ham')))
+    print("Precision Ham = " + str(round(classifier.precision('ham'), 6)))
+    print("Recall Ham = " + str(round(classifier.recall('ham'), 6)))
     p = classifier.precision('ham')
     r = classifier.recall('ham')
     b = 1
-    print("F1 Ham = " + str((b * b + 1) * p * r / (b * b * p + r)))
+    print("F1 Ham = " + str(round((b * b + 1) * p * r / (b * b * p + r), 6)))
     print("__________________________________________")
     print("Accuracy = " + str(classifier.accuracy()))
     print("Confusion matrix: ")

@@ -85,12 +85,7 @@ class Retrainer:
         modelBuilder.words = model
         modelBuilder.delta = float(delta)
 
-        print(hamWordCount)
-        print(modelBuilder.hamWordsCount)
-
-        print(spamWordCount)
-        print(modelBuilder.spamWordsCount)
-
+        print(modelBuilder.delta)
         print(len(model))
 
         modelBuilder.caclulateProbabilities(len(model))

@@ -31,11 +31,11 @@ class Classifier:
             if token in model:
                 word = model[token]
                 ltoken = token.lower()
-                if testresult.hamscore > 0.0:
+                if word.hamSmoothP != 0.0:
                     testresult.hamscore += log10(word.hamSmoothP)
                 else:
                     testresult.hamscore = - inf
-                if testresult.spamscore > 0.0:
+                if word.spamSmoothP != 0.0:
                     testresult.spamscore += log10(word.spamSmoothP)
                 else:
                     testresult.spamscore = - inf
@@ -57,21 +57,21 @@ class Classifier:
 
     def precision(self, label):
         if label == 'ham':
-            if float(self.conFusionMatrix[0][0] + self.conFusionMatrix[1][0]) > 0:
+            if float(self.conFusionMatrix[0][0] + self.conFusionMatrix[1][0]) > 0.0:
                 return float(self.conFusionMatrix[0][0]) / float(self.conFusionMatrix[0][0] + self.conFusionMatrix[1][0])
             return inf
         else:
-            if float(self.conFusionMatrix[1][1] + self.conFusionMatrix[0][1]) > 0:
+            if float(self.conFusionMatrix[1][1] + self.conFusionMatrix[0][1]) > 0.0:
                 return float(self.conFusionMatrix[1][1]) / float(self.conFusionMatrix[1][1] + self.conFusionMatrix[0][1])
             return inf
 
     def recall(self, label):
         if label == 'ham':
-            if float(self.conFusionMatrix[0][0] + self.conFusionMatrix[0][1]) > 0:
+            if float(self.conFusionMatrix[0][0] + self.conFusionMatrix[0][1]) > 0.0:
                 return float(self.conFusionMatrix[0][0]) / float(self.conFusionMatrix[0][0] + self.conFusionMatrix[0][1])
             return inf
         else:
-            if float(self.conFusionMatrix[1][1] + self.conFusionMatrix[1][0]) > 0:
+            if float(self.conFusionMatrix[1][1] + self.conFusionMatrix[1][0]) > 0.0:
                 return float(self.conFusionMatrix[1][1]) / float(self.conFusionMatrix[1][1] + self.conFusionMatrix[1][0])
             return inf
 
