@@ -4,3 +4,4 @@ vocab.txt
 __pycache__/**
 .idea/**
 test/**
+baseline.txt

@@ -55,6 +55,7 @@ def train():
         delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     else:
         vocabFile = (input("Vocabulary file name (baseline.txt by default):") or 'baseline.txt')
+        delta = float((input("Smoothing delta (0.5 by default):") or 0.5))
     modelBuilder.delta = float(delta)
 
     if vocabAv == 'no':
@@ -81,7 +82,8 @@ def train():
             sys.stdout.flush()
             sys.stdout.write("progress: %d%%   \r" % (progress))
 
-        modelBuilder.caclulateProbabilities()
+        vSize = len(modelBuilder.words)
+        modelBuilder.caclulateProbabilities(vSize)
         va = modelBuilder.getWords()
         vf = open(vocabFile, 'a')
         for line in va:
